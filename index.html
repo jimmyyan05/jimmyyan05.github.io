@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <title>我的翻頁電子書（48頁＋縮放）</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
 
     <!-- jQuery（必須先於 turn.js） -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -41,7 +44,18 @@
         align-items: center;
         position: relative;
         overflow: hidden;
+        touch-action: none; /* 讓手勢事件好控管（避免瀏覽器預設捲動） */
+
+        touch-action: none;
+        -ms-touch-action: none;
+        -webkit-user-select: none;
         user-select: none;
+      }
+
+      /* 縮放容器：所有縮放/平移都套在這層 */
+      .zoom-canvas {
+        will-change: transform;
+        transform-origin: center center;
       }
 
       /* 書本本體 */
@@ -207,6 +221,13 @@
         });
         viewport.addEventListener(
           "dblclick",
+          (e) => {
+            e.preventDefault();
+          },
+          { passive: false }
+        );
+        viewport.addEventListener(
+          "touchmove",
           (e) => {
             e.preventDefault();
           },
