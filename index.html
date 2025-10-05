@@ -318,21 +318,21 @@
           { passive: false }
         );
 
-        // // 雙擊切換 1x / 2x（以點擊位置為中心）
-        // viewport.addEventListener("dblclick", function (e) {
-        //   const rect = canvas.getBoundingClientRect();
-        //   const cx = e.clientX - rect.left,
-        //     cy = e.clientY - rect.top;
-        //   const target = zoom > 1.01 ? 1 : 2;
-        //   const k = (baseScale * target) / (baseScale * zoom);
-        //   tx = cx - k * (cx - tx);
-        //   ty = cy - k * (cy - ty);
-        //   zoom = target;
-        //   if (zoom === 1) {
-        //     tx = ty = 0;
-        //   }
-        //   applyTransform();
-        // });
+        // 雙擊切換 1x / 2x（以點擊位置為中心）
+        viewport.addEventListener("dblclick", function (e) {
+          const rect = canvas.getBoundingClientRect();
+          const cx = e.clientX - rect.left,
+            cy = e.clientY - rect.top;
+          const target = zoom > 1.01 ? 1 : 2;
+          const k = (baseScale * target) / (baseScale * zoom);
+          tx = cx - k * (cx - tx);
+          ty = cy - k * (cy - ty);
+          zoom = target;
+          if (zoom === 1) {
+            tx = ty = 0;
+          }
+          applyTransform();
+        });
 
         // 拖曳平移（僅在放大時）
         let dragging = false,
