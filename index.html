@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <title>我的翻頁電子書（48頁＋縮放）</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
 
     <!-- jQuery（必須先於 turn.js） -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -206,30 +209,6 @@
         const $book = $("#book");
         const viewport = document.getElementById("viewport");
         const canvas = document.getElementById("zoomCanvas");
-        // ---- Mobile gesture hardening to avoid system zoom/lock-ups ----
-        ["gesturestart", "gesturechange", "gestureend"].forEach((evt) => {
-          viewport.addEventListener(
-            evt,
-            (e) => {
-              e.preventDefault();
-            },
-            { passive: false }
-          );
-        });
-        viewport.addEventListener(
-          "dblclick",
-          (e) => {
-            e.preventDefault();
-          },
-          { passive: false }
-        );
-        viewport.addEventListener(
-          "touchmove",
-          (e) => {
-            e.preventDefault();
-          },
-          { passive: false }
-        );
 
         // 初始化翻頁（交給 CSS 置中，所以關掉 autoCenter）
         $book.turn({
