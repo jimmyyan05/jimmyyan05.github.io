@@ -176,10 +176,9 @@
           <div class="page" style="background-image: url('pages/48.jpg')"></div>
         </div>
       </div>
-
-      <!-- 翻頁按鈕 -->
+      <!-- 
       <div id="prev" class="nav">◀</div>
-      <div id="next" class="nav">▶</div>
+      <div id="next" class="nav">▶</div> -->
     </div>
 
     <script>
@@ -259,9 +258,6 @@
         window.addEventListener("resize", onResize, { passive: true });
         computeBaseScale();
         schedule();
-
-        // 滾輪縮放（直接滾輪即可，無需 Ctrl；游標為中心）
-        // 滾輪縮放（已停用，改用手機雙指縮放）
 
         // 雙擊：1x / 2x 切換（以點擊位置為中心）
         viewport.addEventListener("dblclick", function (e) {
