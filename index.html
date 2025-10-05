@@ -212,13 +212,6 @@
           },
           { passive: false }
         );
-        viewport.addEventListener(
-          "touchmove",
-          (e) => {
-            e.preventDefault();
-          },
-          { passive: false }
-        );
 
         // 初始化翻頁（交給 CSS 置中，所以關掉 autoCenter）
         $book.turn({
