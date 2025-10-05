@@ -46,6 +46,12 @@
         overflow: hidden;
       }
 
+      /* 縮放容器：所有縮放/平移都套在這層 */
+      .zoom-canvas {
+        will-change: transform;
+        transform-origin: center center;
+      }
+
       /* 書本本體 */
       #book {
         width: 1060px; /* 530×2 */
