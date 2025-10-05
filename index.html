@@ -333,8 +333,6 @@
             };
         });
         // 翻頁控制
-        document.getElementById("prev").onclick = () => $book.turn("previous");
-        document.getElementById("next").onclick = () => $book.turn("next");
         document.addEventListener("keydown", (e) => {
           if (e.key === "ArrowLeft") $book.turn("previous");
           if (e.key === "ArrowRight") $book.turn("next");
