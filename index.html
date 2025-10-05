@@ -44,18 +44,6 @@
         align-items: center;
         position: relative;
         overflow: hidden;
-        touch-action: none; /* 讓手勢事件好控管（避免瀏覽器預設捲動） */
-
-        touch-action: none;
-        -ms-touch-action: none;
-        -webkit-user-select: none;
-        user-select: none;
-      }
-
-      /* 縮放容器：所有縮放/平移都套在這層 */
-      .zoom-canvas {
-        will-change: transform;
-        transform-origin: center center;
       }
 
       /* 書本本體 */
@@ -120,14 +108,6 @@
         display: none;
         z-index: 20;
         opacity: 0.9;
-      }
-
-      #zoomCanvas {
-        touch-action: none;
-        -ms-touch-action: none;
-        -webkit-user-drag: none;
-        -webkit-user-select: none;
-        user-select: none;
       }
     </style>
   </head>
