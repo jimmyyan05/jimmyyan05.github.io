@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>我的翻頁電子書（48頁＋縮放）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- jQuery（必須先於 turn.js） -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- turn.js CDN；失敗則載本機 -->
+  <script>
+    (function(){
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js';
+      s.onerror = function(){
+        const f = document.createElement('script');
+        f.src = 'lib/turn.min.js';
+        document.head.appendChild(f);
+      };
+      document.head.appendChild(s);
+    })();
+  </script>
+
+  <style>
+    html,body{
+      height:100%;
+      margin:0;
+      background:#FBF3EA; /* 外框背景 */
+      overflow:hidden;
+      font-family: system-ui,"PingFang TC","Microsoft JhengHei",sans-serif;
+    }
+
+    /* 置中舞台：用 flex，不與 turn.js 衝突 */
+    .viewport{
+      width:100%;
+      height:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      position:relative;
+      overflow:hidden;
+      touch-action:none; /* 讓手勢事件好控管（避免瀏覽器預設捲動） */
+    }
+
+    /* 縮放容器：所有縮放/平移都套在這層 */
+    .zoom-canvas{
+      will-change: transform;
+      transform-origin: center center;
+    }
+
+    /* 書本本體 */
+    #book{
+      width:1060px;   /* 530×2 */
+      height:840px;
+      box-shadow:0 0 20px rgba(0,0,0,.2);
+      background:#fff; /* 書本底色 */
+    }
+
+    #book .page{
+      width:530px;
+      height:840px;
+      background:#fff no-repeat center center / 100% 100%;
+    }
+
+    /* 縮放工具列 */
+    /* 翻頁按鈕 */
+    .nav{
+      position:fixed; top:50%;
+      transform:translateY(-50%);
+      width:48px; height:48px; border-radius:50%;
+      display:grid; place-items:center; cursor:pointer; user-select:none;
+      background:rgba(0,0,0,.15); color:#fff; font:20px/1 system-ui;
+      z-index:10; transition:background .3s;
+    }
+    .nav:hover{ background:rgba(0,0,0,.35); }
+    #prev{ left:12px; } #next{ right:12px; }
+
+    /* 放大時，禁用頁面點擊以避免誤觸翻頁（仍可用左右按鈕/鍵盤） */
+    .zoomed #book .page{ pointer-events:none; }
+
+    /* 載入提示 */
+    #msg{
+      position:fixed; left:50%; top:12px; transform:translateX(-50%);
+      background:#222; color:#fff; padding:8px 12px; border-radius:6px;
+      font-size:14px; display:none; z-index:20; opacity:.9;
+    }
+  </style>
+</head>
+
+<body>
+<div id="msg">尚未載入 turn.js（僅顯示圖片）</div>
+
+<div class="viewport" id="viewport">
+  <!-- 縮放畫布：縮放與平移都套在這層 -->
+  <div class="zoom-canvas" id="zoomCanvas">
+    <div id="book">
+      <!-- 48頁 -->
+      <div class="page" style="background-image:url('pages/1.jpg')"></div>
+      <div class="page" style="background-image:url('pages/2.jpg')"></div>
+      <div class="page" style="background-image:url('pages/3.jpg')"></div>
+      <div class="page" style="background-image:url('pages/4.jpg')"></div>
+      <div class="page" style="background-image:url('pages/5.jpg')"></div>
+      <div class="page" style="background-image:url('pages/6.jpg')"></div>
+      <div class="page" style="background-image:url('pages/7.jpg')"></div>
+      <div class="page" style="background-image:url('pages/8.jpg')"></div>
+      <div class="page" style="background-image:url('pages/9.jpg')"></div>
+      <div class="page" style="background-image:url('pages/10.jpg')"></div>
+      <div class="page" style="background-image:url('pages/11.jpg')"></div>
+      <div class="page" style="background-image:url('pages/12.jpg')"></div>
+      <div class="page" style="background-image:url('pages/13.jpg')"></div>
+      <div class="page" style="background-image:url('pages/14.jpg')"></div>
+      <div class="page" style="background-image:url('pages/15.jpg')"></div>
+      <div class="page" style="background-image:url('pages/16.jpg')"></div>
+      <div class="page" style="background-image:url('pages/17.jpg')"></div>
+      <div class="page" style="background-image:url('pages/18.jpg')"></div>
+      <div class="page" style="background-image:url('pages/19.jpg')"></div>
+      <div class="page" style="background-image:url('pages/20.jpg')"></div>
+      <div class="page" style="background-image:url('pages/21.jpg')"></div>
+      <div class="page" style="background-image:url('pages/22.jpg')"></div>
+      <div class="page" style="background-image:url('pages/23.jpg')"></div>
+      <div class="page" style="background-image:url('pages/24.jpg')"></div>
+      <div class="page" style="background-image:url('pages/25.jpg')"></div>
+      <div class="page" style="background-image:url('pages/26.jpg')"></div>
+      <div class="page" style="background-image:url('pages/27.jpg')"></div>
+      <div class="page" style="background-image:url('pages/28.jpg')"></div>
+      <div class="page" style="background-image:url('pages/29.jpg')"></div>
+      <div class="page" style="background-image:url('pages/30.jpg')"></div>
+      <div class="page" style="background-image:url('pages/31.jpg')"></div>
+      <div class="page" style="background-image:url('pages/32.jpg')"></div>
+      <div class="page" style="background-image:url('pages/33.jpg')"></div>
+      <div class="page" style="background-image:url('pages/34.jpg')"></div>
+      <div class="page" style="background-image:url('pages/35.jpg')"></div>
+      <div class="page" style="background-image:url('pages/36.jpg')"></div>
+      <div class="page" style="background-image:url('pages/37.jpg')"></div>
+      <div class="page" style="background-image:url('pages/38.jpg')"></div>
+      <div class="page" style="background-image:url('pages/39.jpg')"></div>
+      <div class="page" style="background-image:url('pages/40.jpg')"></div>
+      <div class="page" style="background-image:url('pages/41.jpg')"></div>
+      <div class="page" style="background-image:url('pages/42.jpg')"></div>
+      <div class="page" style="background-image:url('pages/43.jpg')"></div>
+      <div class="page" style="background-image:url('pages/44.jpg')"></div>
+      <div class="page" style="background-image:url('pages/45.jpg')"></div>
+      <div class="page" style="background-image:url('pages/46.jpg')"></div>
+      <div class="page" style="background-image:url('pages/47.jpg')"></div>
+      <div class="page" style="background-image:url('pages/48.jpg')"></div>
+    </div>
+  </div>
+
+  <!-- 翻頁按鈕 -->
+  <div id="prev" class="nav">◀</div>
+  <div id="next" class="nav">▶</div></div>
+
+<script>
+function initWhenReady(){
+  if (typeof jQuery === 'undefined' || !jQuery.fn) return setTimeout(initWhenReady, 50);
+  if (typeof jQuery.fn.turn !== 'function') {
+    document.getElementById('msg').style.display = 'block';
+    return setTimeout(initWhenReady, 100);
+  }
+  document.getElementById('msg').style.display = 'none';
+
+  const $book = $('#book');
+  const viewport = document.getElementById('viewport');
+  const canvas = document.getElementById('zoomCanvas');
+
+  // 初始化翻頁（交給 CSS 置中，所以關掉 autoCenter）
+  $book.turn({
+    width:1060,
+    height:840,
+    elevation:50,
+    gradients:true,
+    autoCenter:false
+  });
+
+  
+  // === 縮放/平移引擎（rAF 平滑 + GPU 加速 + 游標中心縮放）===
+  const BASE_W = 1060, BASE_H = 840;
+  let baseScale = 1;            // 視窗自適應倍率
+  let scale = 1;                // 使用者縮放倍率（MIN..MAX）
+  let tx = 0, ty = 0;           // 平移（視窗中心為原點）
+  const MAX_ZOOM = 4, MIN_ZOOM = 1;
+
+  // GPU 加速提示
+  canvas.style.willChange = 'transform';
+
+  function computeBaseScale(){
+    baseScale = Math.min(
+      viewport.clientWidth  / BASE_W,
+      viewport.clientHeight / BASE_H,
+      1
+    );
+  }
+
+  function clampPan(){
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+    const cw = BASE_W * baseScale * scale;
+    const ch = BASE_H * baseScale * scale;
+    const maxX = Math.max(0, (cw - vw) / 2);
+    const maxY = Math.max(0, (ch - vh) / 2);
+    if (Math.abs(tx) > maxX) tx = tx < 0 ? -maxX : maxX;
+    if (Math.abs(ty) > maxY) ty = ty < 0 ? -maxY : maxY;
+    if (cw <= vw) tx = 0;
+    if (ch <= vh) ty = 0;
+  }
+
+  let rafId = 0;
+  function applyTransform(){
+    rafId = 0;
+    clampPan();
+    const s = baseScale * scale;
+    canvas.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${s})`;
+    canvas.classList.toggle('zoomed', scale > 1.001);
+  }
+  function schedule(){ if (!rafId) rafId = requestAnimationFrame(applyTransform); }
+
+  // 初始化
+  function onResize(){ computeBaseScale(); schedule(); }
+  window.addEventListener('resize', onResize, {passive:true});
+  computeBaseScale(); schedule();
+
+  // 滾輪縮放（直接滾輪即可，無需 Ctrl；游標為中心）
+  viewport.addEventListener('wheel', function(e){
+    e.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const cx = e.clientX - rect.left - rect.width/2;
+    const cy = e.clientY - rect.top  - rect.height/2;
+
+    const sOld = scale;
+    const factor = Math.exp(-e.deltaY * 0.0015); // 平滑縮放
+    scale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, sOld * factor));
+    const sNew = scale;
+
+    const contentX = (cx - tx) / (baseScale * sOld);
+    const contentY = (cy - ty) / (baseScale * sOld);
+
+    tx = cx - contentX * (baseScale * sNew);
+    ty = cy - contentY * (baseScale * sNew);
+
+    schedule();
+  }, {passive:false});
+
+  // 雙擊：1x / 2x 切換（以點擊位置為中心）
+  viewport.addEventListener('dblclick', function(e){
+    const rect = viewport.getBoundingClientRect();
+    const cx = e.clientX - rect.left - rect.width/2;
+    const cy = e.clientY - rect.top  - rect.height/2;
+    const target = (scale > 1.01) ? 1 : 2;
+    const sOld = scale, sNew = target;
+
+    const contentX = (cx - tx) / (baseScale * sOld);
+    const contentY = (cy - ty) / (baseScale * sOld);
+
+    scale = sNew;
+    tx = cx - contentX * (baseScale * sNew);
+    ty = cy - contentY * (baseScale * sNew);
+    schedule();
+  });
+
+  // 拖曳平移（放大狀態才啟動）
+  let dragging = false, sx=0, sy=0, ox=0, oy=0;
+  viewport.addEventListener('pointerdown', (e)=>{
+    if (scale <= 1.01) return;
+    dragging = true; sx = e.clientX; sy = e.clientY; ox = tx; oy = ty;
+    viewport.setPointerCapture(e.pointerId);
+  });
+  viewport.addEventListener('pointermove', (e)=>{
+    if (!dragging) return;
+    tx = ox + (e.clientX - sx);
+    ty = oy + (e.clientY - sy);
+    schedule();
+  });
+  function endDrag(e){
+    if (!dragging) return;
+    dragging = false;
+    try{ viewport.releasePointerCapture(e.pointerId); }catch(_){}
+  }
+  viewport.addEventListener('pointerup', endDrag);
+  viewport.addEventListener('pointercancel', ()=> dragging=false);
+
+  // 若仍存在舊的 zoom 按鈕，容錯處理（大多已移除）
+  function zoomBy(f){
+    const sOld = scale, sNew = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, sOld*f));
+    const rect = viewport.getBoundingClientRect();
+    const cx = 0, cy = 0; // 以中心
+    const contentX = (cx - tx) / (baseScale * sOld);
+    const contentY = (cy - ty) / (baseScale * sOld);
+    scale = sNew;
+    tx = cx - contentX * (baseScale * sNew);
+    ty = cy - contentY * (baseScale * sNew);
+    schedule();
+  }
+  ['zoomIn','zoomOut','zoomReset'].forEach((id,idx)=>{
+    const el = document.getElementById(id); if(!el) return;
+    if (idx===0) el.onclick = ()=> zoomBy(1.2);
+    if (idx===1) el.onclick = ()=> zoomBy(1/1.2);
+    if (idx===2) el.onclick = ()=>{ scale=1; tx=0; ty=0; schedule(); };
+  });
+// 翻頁控制
+  document.getElementById('prev').onclick = () => $book.turn('previous');
+  document.getElementById('next').onclick = () => $book.turn('next');
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowLeft')  $book.turn('previous');
+    if(e.key==='ArrowRight') $book.turn('next');
+  });
+}
+initWhenReady();
+</script>
+</body>
+</html>
