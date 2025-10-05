@@ -57,34 +57,37 @@
         width: 1060px; /* 530×2 */
         height: 840px;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-        background: #fff; /* 書本底色 */
+        background: #fbf3ea; /* 書本底色 */
       }
 
       #book .page {
         width: 530px;
         height: 840px;
-        background: #fff no-repeat center center / 100% 100%;
+        background: #fbf3ea no-repeat center center / 100% 100%;
       }
 
       /* 載入提示 */
       #msg {
-        position: fixed;
+        /* position: fixed;
         left: 50%;
         top: 12px;
         transform: translateX(-50%);
         background: #222;
-        color: #fff;
+   
         padding: 8px 12px;
         border-radius: 6px;
         font-size: 14px;
         display: none;
         z-index: 20;
-        opacity: 0.9;
+        opacity: 0.9; */
+        color: #fbf3ea;
       }
     </style>
   </head>
 
   <body>
+    <div id="msg">尚未載入 turn.js（僅顯示圖片）</div>
+
     <div class="viewport" id="viewport">
       <!-- 縮放畫布：縮放與平移都套在這層 -->
       <div class="zoom-canvas" id="zoomCanvas">
