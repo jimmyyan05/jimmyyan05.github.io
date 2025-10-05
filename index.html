@@ -299,29 +299,7 @@
         schedule();
 
         // 滾輪縮放（直接滾輪即可，無需 Ctrl；游標為中心）
-        viewport.addEventListener(
-          "wheel",
-          function (e) {
-            e.preventDefault();
-            const rect = viewport.getBoundingClientRect();
-            const cx = e.clientX - rect.left - rect.width / 2;
-            const cy = e.clientY - rect.top - rect.height / 2;
-
-            const sOld = scale;
-            const factor = Math.exp(-e.deltaY * 0.0015); // 平滑縮放
-            scale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, sOld * factor));
-            const sNew = scale;
-
-            const contentX = (cx - tx) / (baseScale * sOld);
-            const contentY = (cy - ty) / (baseScale * sOld);
-
-            tx = cx - contentX * (baseScale * sNew);
-            ty = cy - contentY * (baseScale * sNew);
-
-            schedule();
-          },
-          { passive: false }
-        );
+        // 滾輪縮放（已停用，改用手機雙指縮放）
 
         // 雙擊：1x / 2x 切換（以點擊位置為中心）
         viewport.addEventListener("dblclick", function (e) {
@@ -411,4 +389,3 @@
     </script>
   </body>
 </html>
-
