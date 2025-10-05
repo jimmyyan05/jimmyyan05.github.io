@@ -5,7 +5,7 @@
     <title>我的翻頁電子書（48頁＋縮放）</title>
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
     />
 
     <!-- jQuery（必須先於 turn.js） -->
@@ -45,6 +45,11 @@
         position: relative;
         overflow: hidden;
         touch-action: none; /* 讓手勢事件好控管（避免瀏覽器預設捲動） */
+
+        touch-action: none;
+        -ms-touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
       }
 
       /* 縮放容器：所有縮放/平移都套在這層 */
@@ -68,31 +73,6 @@
       }
 
       /* 縮放工具列 */
-      .zoom-toolbar {
-        position: fixed;
-        right: 16px;
-        bottom: 16px;
-        z-index: 15;
-        display: flex;
-        gap: 8px;
-      }
-      .zoom-btn {
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        border: 0;
-        background: rgba(0, 0, 0, 0.15);
-        color: #fff;
-        cursor: pointer;
-        font-size: 20px;
-        display: grid;
-        place-items: center;
-        transition: background 0.25s;
-      }
-      .zoom-btn:hover {
-        background: rgba(0, 0, 0, 0.3);
-      }
-
       /* 翻頁按鈕 */
       .nav {
         position: fixed;
@@ -140,6 +120,14 @@
         display: none;
         z-index: 20;
         opacity: 0.9;
+      }
+
+      #zoomCanvas {
+        touch-action: none;
+        -ms-touch-action: none;
+        -webkit-user-drag: none;
+        -webkit-user-select: none;
+        user-select: none;
       }
     </style>
   </head>
@@ -206,13 +194,6 @@
       <!-- 翻頁按鈕 -->
       <div id="prev" class="nav">◀</div>
       <div id="next" class="nav">▶</div>
-
-      <!-- 縮放工具列 -->
-      <div class="zoom-toolbar">
-        <button class="zoom-btn" id="zoomOut" title="縮小">−</button>
-        <button class="zoom-btn" id="zoomReset" title="重置">⤿</button>
-        <button class="zoom-btn" id="zoomIn" title="放大">＋</button>
-      </div>
     </div>
 
     <script>
@@ -228,6 +209,30 @@
         const $book = $("#book");
         const viewport = document.getElementById("viewport");
         const canvas = document.getElementById("zoomCanvas");
+        // ---- Mobile gesture hardening to avoid system zoom/lock-ups ----
+        ["gesturestart", "gesturechange", "gestureend"].forEach((evt) => {
+          viewport.addEventListener(
+            evt,
+            (e) => {
+              e.preventDefault();
+            },
+            { passive: false }
+          );
+        });
+        viewport.addEventListener(
+          "dblclick",
+          (e) => {
+            e.preventDefault();
+          },
+          { passive: false }
+        );
+        viewport.addEventListener(
+          "touchmove",
+          (e) => {
+            e.preventDefault();
+          },
+          { passive: false }
+        );
 
         // 初始化翻頁（交給 CSS 置中，所以關掉 autoCenter）
         $book.turn({
@@ -236,18 +241,20 @@
           elevation: 50,
           gradients: true,
           autoCenter: false,
-          single: false, // 雙頁模式
         });
 
-        // === 縮放/平移引擎 ===
+        // === 縮放/平移引擎（rAF 平滑 + GPU 加速 + 游標中心縮放）===
         const BASE_W = 1060,
           BASE_H = 840;
-        let baseScale = 1; // 視窗自適應比例
-        let zoom = 1; // 使用者縮放倍率（1~MAX_ZOOM）
+        let baseScale = 1; // 視窗自適應倍率
+        let scale = 1; // 使用者縮放倍率（MIN..MAX）
         let tx = 0,
-          ty = 0; // 平移
-        const MAX_ZOOM = 3,
+          ty = 0; // 平移（視窗中心為原點）
+        const MAX_ZOOM = 16,
           MIN_ZOOM = 1;
+
+        // GPU 加速提示
+        canvas.style.willChange = "transform";
 
         function computeBaseScale() {
           baseScale = Math.min(
@@ -257,91 +264,91 @@
           );
         }
 
+        function clampPan() {
+          const vw = viewport.clientWidth;
+          const vh = viewport.clientHeight;
+          const cw = BASE_W * baseScale * scale;
+          const ch = BASE_H * baseScale * scale;
+          const maxX = Math.max(0, (cw - vw) / 2);
+          const maxY = Math.max(0, (ch - vh) / 2);
+          if (Math.abs(tx) > maxX) tx = tx < 0 ? -maxX : maxX;
+          if (Math.abs(ty) > maxY) ty = ty < 0 ? -maxY : maxY;
+          if (cw <= vw) tx = 0;
+          if (ch <= vh) ty = 0;
+        }
+
+        let rafId = 0;
         function applyTransform() {
-          const s = baseScale * zoom;
-          canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
-          canvas.classList.toggle("zoomed", zoom > 1.001);
+          rafId = 0;
+          clampPan();
+          const s = baseScale * scale;
+          canvas.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${s})`;
+          canvas.classList.toggle("zoomed", scale > 1.001);
+        }
+        function schedule() {
+          if (!rafId) rafId = requestAnimationFrame(applyTransform);
         }
 
-        function resetView() {
-          zoom = 1;
-          tx = 0;
-          ty = 0;
-          applyTransform();
-        }
-
-        // 視窗改變大小 → 只更新 baseScale，不影響使用者 zoom
+        // 初始化
         function onResize() {
           computeBaseScale();
-          applyTransform();
+          schedule();
         }
         window.addEventListener("resize", onResize, { passive: true });
         computeBaseScale();
-        applyTransform();
+        schedule();
 
-        // 按鈕縮放
-        document.getElementById("zoomIn").onclick = () => {
-          zoom = Math.min(MAX_ZOOM, zoom * 1.2);
-          applyTransform();
-        };
-        document.getElementById("zoomOut").onclick = () => {
-          zoom = Math.max(MIN_ZOOM, zoom / 1.2);
-          if (zoom === 1) {
-            tx = ty = 0;
-          }
-          applyTransform();
-        };
-        document.getElementById("zoomReset").onclick = resetView;
-
-        // 滑鼠 Ctrl + 滾輪縮放（以游標為中心）
+        // 滾輪縮放（直接滾輪即可，無需 Ctrl；游標為中心）
         viewport.addEventListener(
           "wheel",
           function (e) {
-            if (!e.ctrlKey) return; // 只有按住 Ctrl 才啟動，避免跟頁面滾動衝突
             e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const cx = e.clientX - rect.left,
-              cy = e.clientY - rect.top;
-            const dir = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-            const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * dir));
-            if (newZoom === zoom) return;
-            // 調整平移，讓縮放以游標為中心
-            const k = (baseScale * newZoom) / (baseScale * zoom);
-            tx = cx - k * (cx - tx);
-            ty = cy - k * (cy - ty);
-            zoom = newZoom;
-            if (zoom === 1) {
-              tx = ty = 0;
-            }
-            applyTransform();
+            const rect = viewport.getBoundingClientRect();
+            const cx = e.clientX - rect.left - rect.width / 2;
+            const cy = e.clientY - rect.top - rect.height / 2;
+
+            const sOld = scale;
+            const factor = Math.exp(-e.deltaY * 0.0015); // 平滑縮放
+            scale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, sOld * factor));
+            const sNew = scale;
+
+            const contentX = (cx - tx) / (baseScale * sOld);
+            const contentY = (cy - ty) / (baseScale * sOld);
+
+            tx = cx - contentX * (baseScale * sNew);
+            ty = cy - contentY * (baseScale * sNew);
+
+            schedule();
           },
           { passive: false }
         );
 
-        // 雙擊切換 1x / 2x（以點擊位置為中心）
+        // 雙擊：1x / 2x 切換（以點擊位置為中心）
         viewport.addEventListener("dblclick", function (e) {
-          const rect = canvas.getBoundingClientRect();
-          const cx = e.clientX - rect.left,
-            cy = e.clientY - rect.top;
-          const target = zoom > 1.01 ? 1 : 2;
-          const k = (baseScale * target) / (baseScale * zoom);
-          tx = cx - k * (cx - tx);
-          ty = cy - k * (cy - ty);
-          zoom = target;
-          if (zoom === 1) {
-            tx = ty = 0;
-          }
-          applyTransform();
+          const rect = viewport.getBoundingClientRect();
+          const cx = e.clientX - rect.left - rect.width / 2;
+          const cy = e.clientY - rect.top - rect.height / 2;
+          const target = scale > 1.01 ? 1 : 2;
+          const sOld = scale,
+            sNew = target;
+
+          const contentX = (cx - tx) / (baseScale * sOld);
+          const contentY = (cy - ty) / (baseScale * sOld);
+
+          scale = sNew;
+          tx = cx - contentX * (baseScale * sNew);
+          ty = cy - contentY * (baseScale * sNew);
+          schedule();
         });
 
-        // 拖曳平移（僅在放大時）
+        // 拖曳平移（放大狀態才啟動）
         let dragging = false,
           sx = 0,
           sy = 0,
           ox = 0,
           oy = 0;
         viewport.addEventListener("pointerdown", (e) => {
-          if (zoom <= 1.01) return;
+          if (scale <= 1.01) return;
           dragging = true;
           sx = e.clientX;
           sy = e.clientY;
@@ -353,14 +360,45 @@
           if (!dragging) return;
           tx = ox + (e.clientX - sx);
           ty = oy + (e.clientY - sy);
-          applyTransform();
+          schedule();
         });
-        viewport.addEventListener("pointerup", (e) => {
+        function endDrag(e) {
+          if (!dragging) return;
           dragging = false;
-          viewport.releasePointerCapture(e.pointerId);
-        });
+          try {
+            viewport.releasePointerCapture(e.pointerId);
+          } catch (_) {}
+        }
+        viewport.addEventListener("pointerup", endDrag);
         viewport.addEventListener("pointercancel", () => (dragging = false));
 
+        // 若仍存在舊的 zoom 按鈕，容錯處理（大多已移除）
+        function zoomBy(f) {
+          const sOld = scale,
+            sNew = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, sOld * f));
+          const rect = viewport.getBoundingClientRect();
+          const cx = 0,
+            cy = 0; // 以中心
+          const contentX = (cx - tx) / (baseScale * sOld);
+          const contentY = (cy - ty) / (baseScale * sOld);
+          scale = sNew;
+          tx = cx - contentX * (baseScale * sNew);
+          ty = cy - contentY * (baseScale * sNew);
+          schedule();
+        }
+        ["zoomIn", "zoomOut", "zoomReset"].forEach((id, idx) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (idx === 0) el.onclick = () => zoomBy(1.2);
+          if (idx === 1) el.onclick = () => zoomBy(1 / 1.2);
+          if (idx === 2)
+            el.onclick = () => {
+              scale = 1;
+              tx = 0;
+              ty = 0;
+              schedule();
+            };
+        });
         // 翻頁控制
         document.getElementById("prev").onclick = () => $book.turn("previous");
         document.getElementById("next").onclick = () => $book.turn("next");
